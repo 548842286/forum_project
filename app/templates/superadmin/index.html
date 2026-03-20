@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}超级管理员后台 - 社区论坛{% endblock %}
+
+{% block content %}
+<div class="admin-panel mb-4" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+    <h3>超级管理员后台</h3>
+    <p>欢迎回来, {{ current_user.username }}! 您拥有最高权限</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_users }}</div>
+            <div class="stat-label">用户总数</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_admins }}</div>
+            <div class="stat-label">管理员数</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_superadmins }}</div>
+            <div class="stat-label">超级管理员</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_posts }}</div>
+            <div class="stat-label">帖子总数</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_comments }}</div>
+            <div class="stat-label">评论总数</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_boards }}</div>
+            <div class="stat-label">板块总数</div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content mb-4">
+    <h5 class="mb-3">快捷导航</h5>
+    <div class="d-flex gap-3 flex-wrap">
+        <a href="{{ url_for('superadmin.users') }}" class="btn btn-danger">用户权限管理</a>
+        <a href="{{ url_for('superadmin.boards') }}" class="btn btn-danger">板块管理</a>
+        <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">管理员后台</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">返回首页</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <h5 class="mb-3">全部用户</h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>邮箱</th>
+                    <th>角色</th>
+                    <th>状态</th>
+                    <th>注册时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in all_users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% if user.is_superadmin() %}<span class="badge bg-danger">超级管理员</span>
+                        {% elif user.is_admin() %}<span class="badge bg-warning">管理员</span>
+                        {% else %}<span class="badge bg-secondary">用户</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_active %}<span class="badge bg-success">正常</span>
+                        {% else %}<span class="badge bg-danger">禁用</span>{% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            {% if user.is_superadmin() %}
+                            <span class="text-muted">-</span>
+                            {% else %}
+                                {% if not user.is_admin() %}
+                                <form method="POST" action="{{ url_for('superadmin.set_admin', user_id=user.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">设为管理员</button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('superadmin.remove_admin', user_id=user.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">移除管理员</button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('superadmin.toggle_user_status', user_id=user.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                        {% if user.is_active %}禁用{% else %}启用{% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('superadmin.delete_user', user_id=user.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定删除该用户吗?')">删除</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

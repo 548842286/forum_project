@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}管理员后台 - 社区论坛{% endblock %}
+
+{% block content %}
+<div class="admin-panel mb-4">
+    <h3>管理员后台</h3>
+    <p>欢迎回来, {{ current_user.username }}!</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_users }}</div>
+            <div class="stat-label">用户总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_posts }}</div>
+            <div class="stat-label">帖子总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_comments }}</div>
+            <div class="stat-label">评论总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_boards }}</div>
+            <div class="stat-label">板块总数</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="main-content">
+            <h5 class="mb-3">最新帖子</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in recent_posts %}
+                        <tr>
+                            <td><a href="{{ url_for('post.detail', post_id=post.id) }}">{{ post.title[:20] }}...</a></td>
+                            <td>{{ post.author.username }}</td>
+                            <td>{{ post.created_at.strftime('%m-%d') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.toggle_pin', post_id=post.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm {% if post.is_pinned %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                        {% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="main-content">
+            <h5 class="mb-3">最新用户</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>注册时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email[:15] }}...</td>
+                            <td>
+                                {% if user.is_superadmin() %}<span class="badge bg-danger">超级管理员</span>
+                                {% elif user.is_admin() %}<span class="badge bg-warning">管理员</span>
+                                {% else %}<span class="badge bg-secondary">用户</span>{% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%m-%d') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="main-content">
+            <h5 class="mb-3">快捷导航</h5>
+            <div class="d-flex gap-3">
+                <a href="{{ url_for('admin.posts') }}" class="btn btn-primary-custom">帖子管理</a>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-primary-custom">用户管理</a>
+                <a href="{{ url_for('admin.boards') }}" class="btn btn-primary-custom">板块管理</a>
+                {% if current_user.is_superadmin() %}
+                <a href="{{ url_for('superadmin.index') }}" class="btn btn-danger">超级管理员后台</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
